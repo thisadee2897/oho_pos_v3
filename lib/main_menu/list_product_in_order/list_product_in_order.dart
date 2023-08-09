@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unnecessary_brace_in_string_interps, implementation_imports
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, unnecessary_brace_in_string_interps, implementation_imports, avoid_print
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -27,6 +27,7 @@ class ListProductInOrder extends StatefulWidget {
 
   final String? tableId;
   final String? companyId;
+
   const ListProductInOrder({
     Key? key,
     this.orderId,
@@ -65,7 +66,8 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
   String remark = "ไม่มีหมายเหตุ";
   bool? authority;
   bool isCheckedAllProduct = false;
-
+  bool check = false;
+  List orderdtid = [];
   void toggleSelectAll() {
     setState(() {
       isCheckedAllProduct = !isCheckedAllProduct;
@@ -75,17 +77,23 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
     });
   }
 
-  void serveSelectedProducts() {
-    setState(() {
-      // ถ้า isChecked เป็น true (ถูกเลือก) และ orderdtStatusId ไม่เป็น '5' (ไม่ใช่สถานะยกเลิก)
-      // ก็เปลี่ยนสถานะ orderdtStatusId เป็น '4' (เสิร์ฟแล้ว)
-      for (var product in listProductData) {
-        if (product.checked == true && product.orderdtStatusId != '5') {
-          product.orderdtStatusId = '4';
-          product.checked = false;
-        }
-      }
+  updateOrderStatus(List<dynamic> listoderID) async {
+    print(listoderID);
+    final url = '${UrlApi().url}update_order_status';
+    final body = jsonEncode({
+      'orderhd_id': widget.orderId,
+      'company_id': widget.companyId,
+      'branch_id': widget.branchId,
+      'order_dt_id': listoderID
     });
+    final response = await HttpRequests().httpRequest(url, body, context, true);
+    if (response.statusCode == 200) {
+      setState(() {
+        loading = false;
+        fetchProductDataInOrder();
+      });
+      await AlertDialogs().progressDialog(context, loading);
+    }
   }
 
   fetchProductDataInOrder() async {
@@ -155,18 +163,6 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
     }
     await AlertDialogs().progressDialog(context, loading);
   }
-
-  // fetchDataAuthorityMoveProduct() async {
-  //   final url = '${UrlApi().url}get_data_authority_move_product';
-  //   final body = jsonEncode({
-  //     'user_id': widget.userId,
-  //     'company_id': widget.companyId,
-  //   });
-  //   final response = await HttpRequests().httpRequest(url, body, context, true);
-  //   print(response);
-  //   if (response.data.isNotEmpty) {}
-  //   await AlertDialogs().progressDialog(context, loading);
-  // }
 
   updateStatusProductData(orderDtId, int statusId) async {
     final url = '${UrlApi().url}update_status_product_data';
@@ -338,12 +334,6 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                     for (var product in listProductData) {
                       product.checked = isCheckedAllProduct;
                     }
-                    // Print values here
-                    print('isCheckedAllProduct: $isCheckedAllProduct');
-                    for (var product in listProductData) {
-                      print(
-                          'Product ${product.productName} isChecked: ${product.checked}');
-                    }
                   });
                 },
               ),
@@ -351,17 +341,64 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
               const Spacer(),
               ElevatedButton(
                 onPressed: () {
+                  print("check :$check");
+                  print("isCheckedAllProduct :$isCheckedAllProduct");
+                  if (check == false && isCheckedAllProduct == false) {
+                    return;
+                  } else if (check == true && isCheckedAllProduct == false) {
+                    var newList = listProductData
+                        .where((element) => element.checked == true)
+                        .toList();
+                    setState(() {
+                      for (var product in newList) {
+                        if (product.orderdtStatusId != '5') {
+                          product.orderdtStatusId = '4';
+                          product.checked = false;
+                          check = false;
+                          orderdtid.add(product.orderdtId);
+                        }
+                      }
+                      print(orderdtid);
+                      updateOrderStatus(orderdtid);
+                    });
+                  } else if (check == false && isCheckedAllProduct == true) {
+                    var newList = listProductData
+                        .where((element) => element.checked == true)
+                        .toList();
+                    setState(() {
+                      for (var product in newList) {
+                        if (product.orderdtStatusId != '5') {
+                          product.orderdtStatusId = '4';
+                          product.checked = false;
+                          check = false;
+                          orderdtid.add(product.orderdtId);
+                        }
+                      }
+                      print(orderdtid);
+                      updateOrderStatus(orderdtid);
+                    });
+                  }
+                  var newList = listProductData
+                      .where((element) => element.checked == true)
+                      .toList();
                   setState(() {
-                    for (var product in listProductData) {
+                    for (var product in newList) {
                       if (product.orderdtStatusId != '5') {
                         product.orderdtStatusId = '4';
                         product.checked = false;
-                        isCheckedAllProduct = false;
+                        check = false;
+                        orderdtid.add(product.orderdtId);
                       }
                     }
+                    print(orderdtid);
+                    updateOrderStatus(orderdtid);
                   });
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: check == true || isCheckedAllProduct == true
+                      ? Colors.green
+                      : Colors.grey,
+                ),
                 child: const Text('เสิร์ฟแล้ว'),
               ),
               const SizedBox(width: 10),
@@ -472,6 +509,13 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                             child: ListProductWidget(
                               productData: listProductData[index],
                               toggleSelectAll: () {},
+                              listProductData: listProductData,
+                              updateParentCheck: (newCheck) {
+                                setState(() {
+                                  check =
+                                      newCheck; // อัปเดตค่า check ใน ListProductInOrder
+                                });
+                              },
                             ),
                           ),
                         );
@@ -481,6 +525,12 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                         isCheckedAllProduct: isCheckedAllProduct,
                         toggleSelectAll: toggleSelectAll,
                         isServed: isServed,
+                        listProductData: listProductData,
+                        updateParentCheck: (newCheck) {
+                          setState(() {
+                            check = newCheck;
+                          });
+                        },
                       );
                     },
                   ),

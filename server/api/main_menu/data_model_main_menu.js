@@ -1371,6 +1371,22 @@ class modelMainMenu {
 
             });
     }
+    UpdateOrderStatus(req, res) {
+        const orderhd_id = req.body.orderhd_id;
+        const company_id = req.body.company_id;
+        const branch_id = req.body.branch_id;
+        const order_dt_id = req.body.order_dt_id;
+        console.log(req.body)
+
+        pool.query(`select "saledata"."fn_update_order_status"(${orderhd_id},${company_id}, ${branch_id}, array[${order_dt_id}])`,
+            (err, result) => {
+                if (err) {
+                    throw err;
+                }
+                res.json(result.rows);
+                console.log(result.rows)
+            });
+    }
 
 
 }

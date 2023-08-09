@@ -21,11 +21,11 @@ class ListProductInOrderDataModel {
   String? saveTime;
   String? totalPriceTopping;
   String? locationType;
-  List? topping;
-  List? buffet;
+  List topping = [];
+  List buffet = [];
   String? orderdtTypeId;
   bool? checked;
-  List? option;
+  List option = [];
 
   ListProductInOrderDataModel({
     this.orderdtId,
@@ -43,11 +43,11 @@ class ListProductInOrderDataModel {
     this.saveTime,
     this.totalPriceTopping,
     this.locationType,
-    this.topping,
-    this.buffet,
+    this.topping = const [],
+    this.buffet = const [],
     this.orderdtTypeId,
     this.checked,
-    this.option,
+    this.option = const [],
   });
   ListProductInOrderDataModel.fromJson(Map<String, dynamic> json) {
     orderdtId = json["orderdt_id"];
@@ -65,10 +65,10 @@ class ListProductInOrderDataModel {
     saveTime = json["savetime"];
     totalPriceTopping = json["total_price_topping"];
     locationType = json["master_order_location_type_name"];
-    topping = json["topping"];
-    buffet = json["buffet"];
+    if (json["topping"] != null) topping = json["topping"];
+    if (json["buffet"] != null) buffet = json["buffet"];
     orderdtTypeId = json["master_orderdt_type_id"];
     checked = false;
-    option = json["option"];
+    if (json["option"] != null) option = json["option"];
   }
 }

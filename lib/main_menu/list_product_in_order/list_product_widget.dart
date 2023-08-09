@@ -1,20 +1,26 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oho_pos_v3/fonts/fonts_style.dart';
 
+import 'model_data_product_in_order/model_data_product_in_order.dart';
+
 class ListProductWidget extends StatefulWidget {
-  final dynamic productData;
+  final ListProductInOrderDataModel productData;
   final bool? isCheckedAllProduct;
   final Function toggleSelectAll;
   final bool? isServed;
+  final List<dynamic> listProductData;
+  final Function(bool) updateParentCheck;
   const ListProductWidget({
     Key? key,
     required this.productData,
     this.isCheckedAllProduct,
     required this.toggleSelectAll,
     this.isServed,
+    required this.listProductData,
+    required this.updateParentCheck,
   }) : super(key: key);
 
   @override
@@ -23,9 +29,15 @@ class ListProductWidget extends StatefulWidget {
 
 class _ListProductWidgetState extends State<ListProductWidget> {
   bool isCheckedAllProduct = false;
-  void toggleCheckbox() {
+  bool isChecked = false;
+  bool thischeck = false;
+  void toggleCheckbox(bool thischeck) {
     setState(() {
-      widget.productData.isChecked = !widget.productData.isChecked;
+      widget.productData.checked =
+          widget.productData.checked == true ? false : true;
+      thischeck =
+          widget.listProductData.any((product) => product.checked == true);
+      widget.updateParentCheck(thischeck);
     });
   }
 
@@ -52,22 +64,22 @@ class _ListProductWidgetState extends State<ListProductWidget> {
           child: ListTile(
             leading: Column(
               children: [
-                Checkbox(
-                  checkColor: Colors.white,
-                  value:
-                      widget.isCheckedAllProduct ?? widget.productData.checked,
-                  onChanged: (bool? value) {
-                    widget.toggleSelectAll();
-                  },
-                ),
+                if (widget.productData.orderdtStatusId == '3')
+                  Checkbox(
+                    checkColor: Colors.white,
+                    value: widget.productData.checked,
+                    onChanged: (bool? value) {
+                      toggleCheckbox(thischeck);
+                    },
+                  ),
                 Card(
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(40),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: CircleAvatar(
                     backgroundColor: Colors.white,
                     child: Text(
-                      widget.productData.orderdtQty,
+                      widget.productData.orderdtQty.toString(),
                       style: FontStyle().h2Style(0xff4fc3f7, 20),
                     ),
                   ),
@@ -75,7 +87,7 @@ class _ListProductWidgetState extends State<ListProductWidget> {
               ],
             ),
             title: Text(
-              widget.productData.productName,
+              widget.productData.productName.toString(),
               style: const TextStyle(fontSize: 20),
             ),
             isThreeLine: true,
@@ -160,7 +172,7 @@ class _ListProductWidgetState extends State<ListProductWidget> {
             ),
             trailing: Text(
               NumberFormat.currency(name: '').format(
-                int.parse(widget.productData.orderdtNetAmnt),
+                int.parse(widget.productData.orderdtNetAmnt.toString()),
               ),
               style: const TextStyle(fontSize: 16, color: Colors.black),
             ),

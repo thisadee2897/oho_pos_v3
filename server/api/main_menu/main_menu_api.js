@@ -139,6 +139,9 @@ router.post('/get_category_buffet_data',(req, res)=>{
 router.post('/get_all_product_inbuffet_data',(req, res)=>{
     data_models.fetchAllProductInBuffetData(req, res);
 });
+router.post('/update_order_status',(req, res)=>{
+    data_models.UpdateOrderStatus(req, res);
+});
 
 
 module.exports = router;
