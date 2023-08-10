@@ -13,6 +13,8 @@ class ListProductWidget extends StatefulWidget {
   final bool? isServed;
   final List<dynamic> listProductData;
   final Function(bool) updateParentCheck;
+  final Function(int) updateSelectedItemCount;
+  final Function(bool) updateAll;
   const ListProductWidget({
     Key? key,
     required this.productData,
@@ -21,6 +23,8 @@ class ListProductWidget extends StatefulWidget {
     this.isServed,
     required this.listProductData,
     required this.updateParentCheck,
+    required this.updateSelectedItemCount,
+    required this.updateAll,
   }) : super(key: key);
 
   @override
@@ -31,6 +35,20 @@ class _ListProductWidgetState extends State<ListProductWidget> {
   bool isCheckedAllProduct = false;
   bool isChecked = false;
   bool thischeck = false;
+  int selectedItemCount = 0;
+  bool updateall = true;
+  bool parentCheck = false;
+  void updateSelectedItemCount(int count) {
+    setState(() {
+      selectedItemCount = count;
+    });
+  }
+
+  void updateAll(bool update) {
+    setState(() {
+      updateall = update;
+    });
+  }
   void toggleCheckbox(bool thischeck) {
     setState(() {
       widget.productData.checked =
@@ -38,7 +56,15 @@ class _ListProductWidgetState extends State<ListProductWidget> {
       thischeck =
           widget.listProductData.any((product) => product.checked == true);
       widget.updateParentCheck(thischeck);
+      print("thischeck $thischeck");
+      int selectedItemCount =
+          widget.listProductData.where((product) => product.checked).length;
+      widget.updateSelectedItemCount(selectedItemCount);
+      updateall =
+          widget.listProductData.every((product) => product.checked == true);
+      widget.updateAll(updateall);
     });
+    // print(updateall);
   }
 
   @override
@@ -69,7 +95,10 @@ class _ListProductWidgetState extends State<ListProductWidget> {
                     checkColor: Colors.white,
                     value: widget.productData.checked,
                     onChanged: (bool? value) {
-                      toggleCheckbox(thischeck);
+                      toggleCheckbox(value!);
+                      updateSelectedItemCount(value
+                          ? selectedItemCount + 1
+                          : selectedItemCount - 1);
                     },
                   ),
                 Card(

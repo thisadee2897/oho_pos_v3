@@ -68,17 +68,20 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
   bool isCheckedAllProduct = false;
   bool check = false;
   List orderdtid = [];
+  int itemCount = 0;
   void toggleSelectAll() {
     setState(() {
       isCheckedAllProduct = !isCheckedAllProduct;
       for (var product in listProductData) {
         product.checked = isCheckedAllProduct;
       }
+      if (listProductData.any((product) => product.checked == true)) {
+        isCheckedAllProduct = false;
+      }
     });
   }
 
   updateOrderStatus(List<dynamic> listoderID) async {
-    print(listoderID);
     final url = '${UrlApi().url}update_order_status';
     final body = jsonEncode({
       'orderhd_id': widget.orderId,
@@ -89,6 +92,8 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
     final response = await HttpRequests().httpRequest(url, body, context, true);
     if (response.statusCode == 200) {
       setState(() {
+        orderdtid = [];
+        itemCount = 0;
         loading = false;
         fetchProductDataInOrder();
       });
@@ -325,24 +330,45 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
           ),
           Row(
             children: [
-              Checkbox(
-                checkColor: Colors.white,
-                value: isCheckedAllProduct,
-                onChanged: (bool? value) {
-                  setState(() {
-                    isCheckedAllProduct = value!;
-                    for (var product in listProductData) {
-                      product.checked = isCheckedAllProduct;
-                    }
-                  });
-                },
-              ),
-              const Text('เลือกทั้งหมด'),
+              if (listProductData
+                  .where((product) => product.orderdtStatusId == '3')
+                  .isNotEmpty)
+                Checkbox(
+                  checkColor: Colors.white,
+                  value: isCheckedAllProduct,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      isCheckedAllProduct = value!;
+                      for (var product in listProductData
+                          .where((product) => product.orderdtStatusId == '3')) {
+                        product.checked = isCheckedAllProduct;
+                        itemCount = listProductData
+                            .where((product) =>
+                                product.orderdtStatusId == '3' &&
+                                product.checked == true)
+                            .length;
+                      }
+                    });
+                  },
+                )
+              else
+                const Checkbox(
+                  value: false,
+                  onChanged: null,
+                ),
+              if (listProductData
+                  .where((product) => product.orderdtStatusId == '3')
+                  .isEmpty)
+                const Text(
+                  'เสิร์ฟครบแล้ว!',
+                  style: TextStyle(fontSize: 20, color: Colors.green),
+                )
+              else
+                Text('เลือกทั้งหมด : $itemCount รายการ'),
               const Spacer(),
               ElevatedButton(
                 onPressed: () {
-                  print("check :$check");
-                  print("isCheckedAllProduct :$isCheckedAllProduct");
+                  print(check);
                   if (check == false && isCheckedAllProduct == false) {
                     return;
                   } else if (check == true && isCheckedAllProduct == false) {
@@ -358,7 +384,6 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                           orderdtid.add(product.orderdtId);
                         }
                       }
-                      print(orderdtid);
                       updateOrderStatus(orderdtid);
                     });
                   } else if (check == false && isCheckedAllProduct == true) {
@@ -372,9 +397,9 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                           product.checked = false;
                           check = false;
                           orderdtid.add(product.orderdtId);
+                          isCheckedAllProduct = false;
                         }
                       }
-                      print(orderdtid);
                       updateOrderStatus(orderdtid);
                     });
                   }
@@ -388,10 +413,9 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                         product.checked = false;
                         check = false;
                         orderdtid.add(product.orderdtId);
+                        isCheckedAllProduct = false;
                       }
                     }
-                    print(orderdtid);
-                    updateOrderStatus(orderdtid);
                   });
                 },
                 style: ElevatedButton.styleFrom(
@@ -508,12 +532,23 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                             ),
                             child: ListProductWidget(
                               productData: listProductData[index],
-                              toggleSelectAll: () {},
+                              toggleSelectAll: toggleSelectAll,
                               listProductData: listProductData,
                               updateParentCheck: (newCheck) {
                                 setState(() {
-                                  check =
-                                      newCheck; // อัปเดตค่า check ใน ListProductInOrder
+                                  check = newCheck;
+                                  print(
+                                      "newCheck1 $newCheck");
+                                });
+                              },
+                              updateSelectedItemCount: (selectedItemCount) {
+                                setState(() {
+                                  itemCount = selectedItemCount;
+                                });
+                              },
+                              updateAll: (updateall) {
+                                setState(() {
+                                  isCheckedAllProduct = updateall;
                                 });
                               },
                             ),
@@ -529,6 +564,18 @@ class _ListProductInOrderState extends State<ListProductInOrder> {
                         updateParentCheck: (newCheck) {
                           setState(() {
                             check = newCheck;
+                            print("newCheck2 $newCheck");
+                          });
+                        },
+                        updateSelectedItemCount: (selectedItemCount) {
+                          setState(() {
+                            itemCount = selectedItemCount;
+                          });
+                        },
+                        updateAll: (updateall) {
+                          setState(() {
+                            isCheckedAllProduct = updateall;
+                            // print(updateall);
                           });
                         },
                       );
